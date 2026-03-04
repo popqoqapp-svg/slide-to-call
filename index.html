@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slide to Call</title>
+<style>
+* { box-sizing: border-box; }
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+}
+.slider-container {
+    width: 310px;
+    height: 55px;
+    background-color: #C1C1C1;
+    border-radius: 30px;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.slider-text {
+    font-size: 14px;
+    color: white;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    user-select: none;
+}
+.slider-button {
+    width: 45px;
+    height: 45px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    touch-action: none;
+}
+.slider-button img {
+    width: 45px;
+    height: 45px;
+    pointer-events: none;
+    -webkit-user-drag: none;
+}
+
+/* Enlace tel: invisible pero real, siempre en el DOM */
+#callLink {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+}
+</style>
+</head>
+<body>
+
+<!-- Enlace real en el DOM, no generado dinámicamente -->
+<a id="callLink" href="tel:+13125551234">call</a>
+
+<div class="slider-container" id="slider">
+    <span class="slider-text" id="sliderText">Slide to Call</span>
+    <div class="slider-button" id="sliderButton">
+        <img src="https://static.wixstatic.com/media/cba853_e851f31ebd97495ab89427b68f0d5326~mv2.png">
+    </div>
+</div>
+
+<script>
+const sliderButton = document.getElementById('sliderButton');
+const sliderContainer = document.getElementById('slider');
+const sliderText = document.getElementById('sliderText');
+const callLink = document.getElementById('callLink');
+
+let isDragging = false;
+let startX;
+let buttonStartLeft;
+
+sliderButton.addEventListener('mousedown', startDrag);
+sliderButton.addEventListener('touchstart', startDrag, { passive: true });
+
+function startDrag(e) {
+    isDragging = true;
+    startX = e.type === 'mousedown' ? e.pageX : e.touches[0].pageX;
+    buttonStartLeft = parseInt(window.getComputedStyle(sliderButton).left, 10);
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('touchmove', onDrag, { passive: true });
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+}
+
+function onDrag(e) {
+    if (!isDragging) return;
+    sliderText.style.opacity = "0";
+    const currentX = e.type === 'mousemove' ? e.pageX : e.touches[0].pageX;
+    const dx = currentX - startX;
+    let newLeft = buttonStartLeft + dx;
+    const maxLeft = sliderContainer.clientWidth - sliderButton.clientWidth - 5;
+    newLeft = Math.max(5, Math.min(newLeft, maxLeft));
+    sliderButton.style.left = newLeft + 'px';
+}
+
+function endDrag() {
+    if (!isDragging) return;
+    isDragging = false;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('touchmove', onDrag);
+    document.removeEventListener('mouseup', endDrag);
+    document.removeEventListener('touchend', endDrag);
+
+    const maxLeft = sliderContainer.clientWidth - sliderButton.clientWidth - 5;
+
+    if (parseInt(sliderButton.style.left, 10) >= maxLeft - 2) {
+        // ✅ Dispara el enlace real que ya está en el DOM
+        // Safari iOS acepta esto porque el <a> existe antes del gesto
+        callLink.click();
+
+        setTimeout(() => {
+            sliderButton.style.left = '5px';
+            sliderText.style.opacity = "1";
+        }, 400);
+    } else {
+        sliderButton.style.left = '5px';
+        sliderText.style.opacity = "1";
+    }
+}
+</script>
+</body>
+</html>
