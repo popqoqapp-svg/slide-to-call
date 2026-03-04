@@ -7,10 +7,8 @@
 <style>
 * { box-sizing: border-box; }
 html, body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
+    width: 100%; height: 100%;
+    margin: 0; padding: 0;
     background: transparent;
     display: flex;
     justify-content: center;
@@ -18,8 +16,7 @@ html, body {
     font-family: Arial, sans-serif;
 }
 .slider-container {
-    width: 310px;
-    height: 55px;
+    width: 310px; height: 55px;
     background-color: #C1C1C1;
     border-radius: 30px;
     position: relative;
@@ -30,75 +27,65 @@ html, body {
     overflow: hidden;
 }
 .slider-text {
-    font-size: 14px;
-    color: white;
+    font-size: 14px; color: white;
     transition: opacity 0.2s ease;
     pointer-events: none;
     user-select: none;
 }
 .slider-button {
-    width: 45px;
-    height: 45px;
+    width: 45px; height: 45px;
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 50%; transform: translateY(-50%);
     left: 5px;
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer;
     touch-action: none;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
 }
 .slider-button img {
-    width: 45px;
-    height: 45px;
+    width: 45px; height: 45px;
     pointer-events: none;
     -webkit-user-drag: none;
-}
-
-/* Enlace tel: invisible pero real, siempre en el DOM */
-#callLink {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    width: 1px;
-    height: 1px;
 }
 </style>
 </head>
 <body>
-
-<!-- Enlace real en el DOM, no generado dinámicamente -->
-<a id="callLink" href="tel:+13125551234">call</a>
-
 <div class="slider-container" id="slider">
     <span class="slider-text" id="sliderText">Slide to Call</span>
-    <div class="slider-button" id="sliderButton">
+    <a class="slider-button" id="sliderButton" href="#">
         <img src="https://static.wixstatic.com/media/cba853_e851f31ebd97495ab89427b68f0d5326~mv2.png">
-    </div>
+    </a>
 </div>
-
 <script>
+// ✅ Lee el número desde la URL: ?phone=+13125551234
+const params = new URLSearchParams(window.location.search);
+const phone = params.get('phone') || '';
 const sliderButton = document.getElementById('sliderButton');
+
+if (phone) {
+    sliderButton.href = 'tel:' + phone;
+} else {
+    sliderButton.removeAttribute('href');
+}
+
 const sliderContainer = document.getElementById('slider');
 const sliderText = document.getElementById('sliderText');
-const callLink = document.getElementById('callLink');
-
 let isDragging = false;
-let startX;
-let buttonStartLeft;
+let startX, buttonStartLeft;
 
-sliderButton.addEventListener('mousedown', startDrag);
 sliderButton.addEventListener('touchstart', startDrag, { passive: true });
+sliderButton.addEventListener('mousedown', startDrag);
 
 function startDrag(e) {
     isDragging = true;
     startX = e.type === 'mousedown' ? e.pageX : e.touches[0].pageX;
     buttonStartLeft = parseInt(window.getComputedStyle(sliderButton).left, 10);
-    document.addEventListener('mousemove', onDrag);
     document.addEventListener('touchmove', onDrag, { passive: true });
-    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('mousemove', onDrag);
     document.addEventListener('touchend', endDrag);
+    document.addEventListener('mouseup', endDrag);
 }
 
 function onDrag(e) {
@@ -112,26 +99,24 @@ function onDrag(e) {
     sliderButton.style.left = newLeft + 'px';
 }
 
-function endDrag() {
+function endDrag(e) {
     if (!isDragging) return;
     isDragging = false;
-    document.removeEventListener('mousemove', onDrag);
     document.removeEventListener('touchmove', onDrag);
-    document.removeEventListener('mouseup', endDrag);
+    document.removeEventListener('mousemove', onDrag);
     document.removeEventListener('touchend', endDrag);
+    document.removeEventListener('mouseup', endDrag);
 
     const maxLeft = sliderContainer.clientWidth - sliderButton.clientWidth - 5;
+    const reachedEnd = parseInt(sliderButton.style.left, 10) >= maxLeft - 2;
 
-    if (parseInt(sliderButton.style.left, 10) >= maxLeft - 2) {
-        // ✅ Dispara el enlace real que ya está en el DOM
-        // Safari iOS acepta esto porque el <a> existe antes del gesto
-        callLink.click();
-
+    if (reachedEnd) {
         setTimeout(() => {
             sliderButton.style.left = '5px';
             sliderText.style.opacity = "1";
-        }, 400);
+        }, 500);
     } else {
+        e.preventDefault && e.preventDefault();
         sliderButton.style.left = '5px';
         sliderText.style.opacity = "1";
     }
