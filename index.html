@@ -1,126 +1,239 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Slide to Call</title>
-<style>
-* { box-sizing: border-box; }
-html, body {
-    width: 100%; height: 100%;
-    margin: 0; padding: 0;
-    background: transparent;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: Arial, sans-serif;
-}
-.slider-container {
-    width: 310px; height: 55px;
-    background-color: #C1C1C1;
-    border-radius: 30px;
-    position: relative;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
-.slider-text {
-    font-size: 14px; color: white;
-    transition: opacity 0.2s ease;
-    pointer-events: none;
-    user-select: none;
-}
-.slider-button {
-    width: 45px; height: 45px;
-    position: absolute;
-    top: 50%; transform: translateY(-50%);
-    left: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    touch-action: none;
-    text-decoration: none;
-    -webkit-tap-highlight-color: transparent;
-}
-.slider-button img {
-    width: 45px; height: 45px;
-    pointer-events: none;
-    -webkit-user-drag: none;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        :root {
+            --container-width: 225px;
+            --container-height: 40px;
+            --container-bg: #f0f0f0;
+            --container-border-radius: 50px;
+            
+            --text-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --text-color-init: #000000;
+            --text-color-final: #ffffff;
+            --text-size: 16px;
+
+            --handle-size: 40px;
+            --handle-bg: #000000;
+            
+            --handle-icon-url: url('https://static.wixstatic.com/media/cba853_70d66ee080dc4e69b1ade91b7ce7b3bd~mv2.png'); 
+            --handle-icon-size-ratio: 80%; 
+
+            --handle-border-radius: 50%;
+            --handle-shadow: 0 2px 8px rgba(0,0,0,0.2);
+
+            --call-btn-bg: #000000;
+            --call-btn-text-color: #ffffff;
+            --call-btn-font-weight: bold;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: transparent;
+            font-family: var(--text-font);
+            overflow: hidden;
+        }
+
+        .swipe-container {
+            width: var(--container-width);
+            height: var(--container-height);
+            background-color: var(--container-bg);
+            border-radius: var(--container-border-radius);
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 0 5px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .fill-bg {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            background-color: #000000;
+            border-radius: var(--container-border-radius);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .swipe-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            color: var(--text-color-init);
+            font-size: var(--text-size);
+            font-weight: 600;
+            pointer-events: none;
+            z-index: 3;
+            transition: opacity 0.1s ease;
+        }
+
+        .swipe-text-final {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            color: var(--text-color-final);
+            font-size: var(--text-size);
+            font-weight: 600;
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        #call-link {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--call-btn-bg);
+            color: var(--call-btn-text-color);
+            text-decoration: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: var(--call-btn-font-weight);
+            border-radius: var(--container-border-radius);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .handle {
+            width: var(--handle-size);
+            height: var(--handle-size);
+            background-color: var(--handle-bg);
+            border-radius: var(--handle-border-radius);
+            position: absolute;
+            left: 0px;
+            z-index: 5;
+            cursor: grab;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--handle-shadow);
+            touch-action: none;
+            background-image: var(--handle-icon-url);
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: var(--handle-icon-size-ratio);
+        }
+
+        .handle::after {
+            content: none; 
+        }
+
+        .unlocked #call-link {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
 </head>
 <body>
-<div class="slider-container" id="slider">
-    <span class="slider-text" id="sliderText">Slide to Call</span>
-    <a class="slider-button" id="sliderButton" href="#">
-        <img src="https://static.wixstatic.com/media/cba853_e851f31ebd97495ab89427b68f0d5326~mv2.png">
+
+<div class="swipe-container" id="container">
+    <div class="fill-bg" id="fillBg"></div>
+
+    <div class="swipe-text" id="instruct">CARGANDO...</div>
+    <div class="swipe-text-final" id="instructFinal">CARGANDO...</div>
+    
+    <a href="#" id="call-link" target="_parent">
+        Confirm Call
     </a>
+
+    <div class="handle" id="handle"></div>
 </div>
+
 <script>
-// ✅ Lee el número desde la URL: ?phone=+13125551234
-const params = new URLSearchParams(window.location.search);
-const phone = params.get('phone') || '';
-const sliderButton = document.getElementById('sliderButton');
+    // Lee el número desde la URL: ?phone=7861234567
+    const params = new URLSearchParams(window.location.search);
 
-if (phone) {
-    sliderButton.href = 'tel:' + phone;
-} else {
-    sliderButton.removeAttribute('href');
-}
+    const CONFIG = {
+        phoneNumber: params.get('phone') || '7861234567',
+        textInitial: "Slide to call",
+        textFinal: "Tap to call!",
+        threshold: 0.95
+    };
 
-const sliderContainer = document.getElementById('slider');
-const sliderText = document.getElementById('sliderText');
-let isDragging = false;
-let startX, buttonStartLeft;
+    const handle = document.getElementById('handle');
+    const container = document.getElementById('container');
+    const instruct = document.getElementById('instruct');
+    const instructFinal = document.getElementById('instructFinal');
+    const callLink = document.getElementById('call-link');
+    const fillBg = document.getElementById('fillBg');
+    
+    instruct.textContent = CONFIG.textInitial;
+    instructFinal.textContent = CONFIG.textFinal;
+    callLink.textContent = CONFIG.textFinal;
+    callLink.href = `tel:${CONFIG.phoneNumber}`;
 
-sliderButton.addEventListener('touchstart', startDrag, { passive: true });
-sliderButton.addEventListener('mousedown', startDrag);
+    let isDragging = false;
+    let startX = 0;
+    const maxSlide = container.offsetWidth - handle.offsetWidth - 10;
 
-function startDrag(e) {
-    isDragging = true;
-    startX = e.type === 'mousedown' ? e.pageX : e.touches[0].pageX;
-    buttonStartLeft = parseInt(window.getComputedStyle(sliderButton).left, 10);
-    document.addEventListener('touchmove', onDrag, { passive: true });
-    document.addEventListener('mousemove', onDrag);
-    document.addEventListener('touchend', endDrag);
-    document.addEventListener('mouseup', endDrag);
-}
+    const start = (e) => {
+        isDragging = true;
+        startX = (e.pageX || e.touches[0].pageX) - handle.offsetLeft;
+        handle.style.transition = 'none';
+        handle.style.cursor = 'grabbing';
+    };
 
-function onDrag(e) {
-    if (!isDragging) return;
-    sliderText.style.opacity = "0";
-    const currentX = e.type === 'mousemove' ? e.pageX : e.touches[0].pageX;
-    const dx = currentX - startX;
-    let newLeft = buttonStartLeft + dx;
-    const maxLeft = sliderContainer.clientWidth - sliderButton.clientWidth - 5;
-    newLeft = Math.max(5, Math.min(newLeft, maxLeft));
-    sliderButton.style.left = newLeft + 'px';
-}
+    const move = (e) => {
+        if (!isDragging) return;
+        let x = (e.pageX || e.touches[0].pageX) - startX;
+        if (x < 0) x = 0;
+        if (x > maxSlide) x = maxSlide;
+        
+        handle.style.left = (x + 5) + 'px';
 
-function endDrag(e) {
-    if (!isDragging) return;
-    isDragging = false;
-    document.removeEventListener('touchmove', onDrag);
-    document.removeEventListener('mousemove', onDrag);
-    document.removeEventListener('touchend', endDrag);
-    document.removeEventListener('mouseup', endDrag);
+        const progress = x / maxSlide;
 
-    const maxLeft = sliderContainer.clientWidth - sliderButton.clientWidth - 5;
-    const reachedEnd = parseInt(sliderButton.style.left, 10) >= maxLeft - 2;
+        const fillPercent = Math.min((progress / CONFIG.threshold) * 100, 100);
+        fillBg.style.width = fillPercent + '%';
 
-    if (reachedEnd) {
-        setTimeout(() => {
-            sliderButton.style.left = '5px';
-            sliderText.style.opacity = "1";
-        }, 500);
-    } else {
-        e.preventDefault && e.preventDefault();
-        sliderButton.style.left = '5px';
-        sliderText.style.opacity = "1";
-    }
-}
+        instruct.style.opacity = 1 - progress;
+        instructFinal.style.opacity = progress;
+    };
+
+    const end = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        handle.style.cursor = 'grab';
+
+        if (parseInt(handle.style.left) >= maxSlide * CONFIG.threshold) {
+            container.classList.add('unlocked');
+            handle.style.display = 'none';
+            fillBg.style.display = 'none';
+            instruct.style.display = 'none';
+            instructFinal.style.display = 'none';
+        } else {
+            handle.style.transition = 'left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            handle.style.left = '5px';
+            fillBg.style.width = '0%';
+            instruct.style.opacity = 1;
+            instructFinal.style.opacity = 0;
+        }
+    };
+
+    handle.addEventListener('mousedown', start);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    handle.addEventListener('touchstart', start, {passive: true});
+    window.addEventListener('touchmove', move, {passive: true});
+    window.addEventListener('touchend', end);
 </script>
+
 </body>
 </html>
